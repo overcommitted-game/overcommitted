@@ -13,7 +13,7 @@
 ## Checklist
 
 - [ ] `npm run check` pasa
-- [ ] Commits atómicos y en inglés, sin `Co-Authored-By`
+- [ ] Commits atómicos y en inglés, sin `Co-Authored-By` (ni en los commits ni en este PR)
 - [ ] Si cambió un comportamiento, la spec está actualizada
 
 Closes #
