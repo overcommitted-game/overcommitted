@@ -1,11 +1,17 @@
 import { createState, type RoundState } from './state';
-import type { GameSnapshot, RoundConfig } from './types';
+import { spawnRandomTask, spawnScheduledTasks, spawnTask } from './tasks';
+import type { GameSnapshot, RoundConfig, TaskKind } from './types';
 
 export class Round {
   private readonly state: RoundState;
 
   constructor(config: RoundConfig) {
     this.state = createState(config);
+    for (let i = 0; i < config.balance.initialTasks; i++) spawnRandomTask(this.state);
+  }
+
+  spawnTask(kind: TaskKind): number {
+    return spawnTask(this.state, kind);
   }
 
   update(dtMs: number): void {
@@ -13,7 +19,9 @@ export class Round {
     if (state.phase === 'ended') return;
     const { balance } = state.config;
     // A long frame (background tab, suspended laptop) must not skip seconds of the round.
-    state.elapsedMs += Math.min(dtMs, balance.maxDtMs);
+    const dt = Math.min(dtMs, balance.maxDtMs);
+    state.elapsedMs += dt;
+    spawnScheduledTasks(state, dt);
     if (state.elapsedMs >= balance.durationMs) {
       state.elapsedMs = balance.durationMs;
       state.phase = 'ended';
@@ -29,7 +37,14 @@ export class Round {
       score: Math.round(state.score),
       held: state.held,
       speedMultiplier: 1,
-      tasks: [],
+      tasks: state.tasks.map((task) => ({
+        id: task.id,
+        kind: task.kind,
+        stepIndex: task.stepIndex,
+        stepProgress: 0, // T3 fills this in once work advances the steps
+        remainingMs: task.remainingMs,
+        timeLimitMs: state.config.recipes[task.kind].timeLimitMs,
+      })),
       stations: state.config.stations.map(({ id, type }) => {
         const agent = state.agents[id] ?? null;
         return {

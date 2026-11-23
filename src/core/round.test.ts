@@ -29,3 +29,36 @@ describe('round clock', () => {
     expect(stations.find((s) => s.id === 'counter-1')).toMatchObject({ item: null, agent: null });
   });
 });
+
+describe('task spawning', () => {
+  test('spawns initial tasks, then on schedule, up to the max', () => {
+    const r = createRound(makeConfig({ initialTasks: 2, spawnEveryMs: 1000, maxPendingTasks: 3 }));
+    expect(r.snapshot().tasks).toHaveLength(2);
+    advance(r, 1000);
+    expect(r.snapshot().tasks).toHaveLength(3);
+    advance(r, 2000);
+    expect(r.snapshot().tasks).toHaveLength(3);
+  });
+
+  test('picks the kind from the weights and the rng', () => {
+    const weights = { clientBug: 1, sideFeature: 0, englishInterview: 0, spanishInterview: 0, techTest: 0, jobApplication: 3 };
+    const low = createRound(makeConfig({ initialTasks: 1, taskWeights: weights }, () => 0.1));
+    const high = createRound(makeConfig({ initialTasks: 1, taskWeights: weights }, () => 0.9));
+    expect(low.snapshot().tasks[0]?.kind).toBe('clientBug');
+    expect(high.snapshot().tasks[0]?.kind).toBe('jobApplication');
+  });
+
+  test('task ids start at 1 and a spawned task begins with its full time limit', () => {
+    const r = createRound(makeConfig());
+    expect(r.spawnTask('clientBug')).toBe(1);
+    expect(r.spawnTask('jobApplication')).toBe(2);
+    expect(r.snapshot().tasks[0]).toEqual({
+      id: 1,
+      kind: 'clientBug',
+      stepIndex: 0,
+      stepProgress: 0,
+      remainingMs: 70000,
+      timeLimitMs: 70000,
+    });
+  });
+});
