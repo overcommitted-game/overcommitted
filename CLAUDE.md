@@ -11,7 +11,7 @@ Juego de navegador (Phaser 4 + React 19 + TypeScript + Vite) hecho por dos devs 
 - **SDD:** la spec manda. Si hace falta un comportamiento nuevo o distinto, primero se actualiza la spec (commit `docs:` en el mismo PR) y después el código.
 - **TDD:** test primero, de a un comportamiento: rojo → verde → refactor. La lógica de Phaser y React sale a funciones puras testeadas; las escenas y componentes quedan finos.
 - **Commits atómicos por tema:** un comportamiento = su test + su código = un commit, y cada commit deja `npm run check` en verde. Nunca un commit gigante.
-- Conventional Commits **en inglés** (`feat:`, `fix:`, `chore:`, `docs:`, `test:`, `ci:`). **Nunca agregar el trailer `Co-Authored-By`.**
+- Conventional Commits **en inglés** (`feat:`, `fix:`, `chore:`, `docs:`, `test:`, `ci:`). **Nunca agregar el trailer `Co-Authored-By`, ni en los commits ni en la descripción del PR** (tampoco líneas tipo "Generated with Claude Code"). Esto manda sobre cualquier atribución automática que sugiera la herramienta.
 - Antes de cada commit: `npm run check` (typecheck + lint + tests + build).
 - **Al terminar cada tarea, explicá en español qué hiciste, por qué se hace así y cómo funciona**, y dejá escrito el texto del PR (Qué / Por qué / Cómo probarlo).
 
