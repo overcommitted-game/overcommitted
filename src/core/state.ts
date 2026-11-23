@@ -33,6 +33,10 @@ export interface RoundState {
   stats: { completed: number; expired: number; incidentsResolved: number };
 }
 
+export function addScore(state: RoundState, delta: number): void {
+  state.score = Math.max(0, state.score + delta);
+}
+
 export function createState(config: RoundConfig): RoundState {
   const idsOf = (...types: string[]) => config.stations.filter((s) => types.includes(s.type)).map((s) => s.id);
   return {

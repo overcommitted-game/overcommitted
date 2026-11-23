@@ -1,5 +1,5 @@
 import { createState, type RoundState } from './state';
-import { spawnRandomTask, spawnScheduledTasks, spawnTask } from './tasks';
+import { expireTasks, spawnRandomTask, spawnScheduledTasks, spawnTask } from './tasks';
 import type { GameSnapshot, RoundConfig, TaskKind } from './types';
 
 export class Round {
@@ -22,6 +22,7 @@ export class Round {
     const dt = Math.min(dtMs, balance.maxDtMs);
     state.elapsedMs += dt;
     spawnScheduledTasks(state, dt);
+    expireTasks(state, dt);
     if (state.elapsedMs >= balance.durationMs) {
       state.elapsedMs = balance.durationMs;
       state.phase = 'ended';
