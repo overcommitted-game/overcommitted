@@ -30,6 +30,18 @@ describe('round clock', () => {
   });
 });
 
+describe('summary', () => {
+  test('summary reports stars from final score', () => {
+    expect(createRound(makeConfig()).summary()).toEqual({
+      score: 0,
+      stars: 0,
+      completed: 0,
+      expired: 0,
+      incidentsResolved: 0,
+    });
+  });
+});
+
 describe('task expiry', () => {
   test('expired task is removed, counted, and score stays >= 0', () => {
     const r = createRound(makeConfig());
