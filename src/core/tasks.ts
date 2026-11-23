@@ -1,4 +1,4 @@
-import type { RoundState } from './state';
+import { addScore, type RoundState } from './state';
 import { TASK_KINDS, type TaskKind } from './types';
 
 export function spawnTask(state: RoundState, kind: TaskKind): number {
@@ -32,5 +32,21 @@ export function spawnScheduledTasks(state: RoundState, dtMs: number): void {
     state.spawnTimerMs -= spawnEveryMs;
     // At the cap the tick is skipped, not saved up: freeing a slot must not trigger a burst.
     if (state.tasks.length < maxPendingTasks) spawnRandomTask(state);
+  }
+}
+
+/** The only place a task leaves the round. */
+export function removeTask(state: RoundState, taskId: number): void {
+  state.tasks = state.tasks.filter((task) => task.id !== taskId);
+}
+
+export function expireTasks(state: RoundState, dtMs: number): void {
+  for (const task of state.tasks) {
+    task.remainingMs -= dtMs;
+    if (task.remainingMs <= 0) {
+      addScore(state, -state.config.balance.expirePenalty);
+      state.stats.expired++;
+      removeTask(state, task.id);
+    }
   }
 }

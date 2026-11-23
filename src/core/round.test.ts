@@ -30,6 +30,25 @@ describe('round clock', () => {
   });
 });
 
+describe('task expiry', () => {
+  test('expired task is removed, counted, and score stays >= 0', () => {
+    const r = createRound(makeConfig());
+    r.spawnTask('jobApplication');
+    advance(r, 30000);
+    expect(r.snapshot()).toMatchObject({ tasks: [], score: 0, stats: { expired: 1 } });
+  });
+
+  test('tasks are listed oldest first with remaining time', () => {
+    const r = createRound(makeConfig());
+    const a = r.spawnTask('jobApplication');
+    advance(r, 1000);
+    const b = r.spawnTask('clientBug');
+    const [ta, tb] = r.snapshot().tasks;
+    expect([ta?.id, tb?.id]).toEqual([a, b]);
+    expect(ta).toMatchObject({ remainingMs: 29000, timeLimitMs: 30000, stepIndex: 0, stepProgress: 0 });
+  });
+});
+
 describe('task spawning', () => {
   test('spawns initial tasks, then on schedule, up to the max', () => {
     const r = createRound(makeConfig({ initialTasks: 2, spawnEveryMs: 1000, maxPendingTasks: 3 }));
