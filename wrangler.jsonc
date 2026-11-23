@@ -1,0 +1,11 @@
+{
+  "name": "overcommitted",
+  "compatibility_date": "2026-11-23",
+  // Static site: Cloudflare serves the Vite build, there is no Worker code.
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  },
+  // `wrangler preview` (PR previews) requires this block, even empty.
+  "previews": {}
+}
