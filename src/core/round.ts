@@ -1,6 +1,7 @@
+import { starsFor } from './scoring';
 import { createState, type RoundState } from './state';
 import { expireTasks, spawnRandomTask, spawnScheduledTasks, spawnTask } from './tasks';
-import type { GameSnapshot, RoundConfig, TaskKind } from './types';
+import type { GameSnapshot, RoundConfig, RoundSummary, TaskKind } from './types';
 
 export class Round {
   private readonly state: RoundState;
@@ -27,6 +28,17 @@ export class Round {
       state.elapsedMs = balance.durationMs;
       state.phase = 'ended';
     }
+  }
+
+  summary(): RoundSummary {
+    const { score, stats } = this.snapshot();
+    return {
+      score,
+      stars: starsFor(score, this.state.config.balance.starThresholds),
+      completed: stats.completed,
+      expired: stats.expired,
+      incidentsResolved: stats.incidentsResolved,
+    };
   }
 
   snapshot(): GameSnapshot {
