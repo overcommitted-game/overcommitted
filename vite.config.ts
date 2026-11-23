@@ -6,8 +6,6 @@ export default defineConfig({
   plugins: [react()],
   test: {
     include: ['src/**/*.test.ts'],
-    // Until the first test lands in T2.
-    passWithNoTests: true,
   },
   build: {
     // Phaser alone is ~1.4 MB minified (~360 kB gzip); warn only if something else grows that big.
