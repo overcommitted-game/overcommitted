@@ -23,6 +23,26 @@ describe('working at a station', () => {
     expect(r.snapshot().tasks.map((t) => t.id)).not.toContain(a);
   });
 
+  test('progress is kept when walking away', () => {
+    const r = createRound(makeConfig());
+    r.spawnTask('jobApplication');
+    hold(r, 'linkedin-1', 1000);
+    hold(r, 'study-1', 500);
+    expect(r.snapshot().tasks[0]?.stepProgress).toBeCloseTo(1000 / 1500);
+    hold(r, 'linkedin-1', 500);
+    expect(r.snapshot().tasks).toHaveLength(0);
+  });
+
+  test('a station shows the progress of the work waiting there, once started', () => {
+    const r = createRound(makeConfig());
+    r.spawnTask('jobApplication');
+    const progressAt = (id: string) => r.snapshot().stations.find((s) => s.id === id)?.workProgress;
+    expect(progressAt('linkedin-1')).toBeNull();
+    hold(r, 'linkedin-1', 600);
+    expect(progressAt('linkedin-1')).toBeCloseTo(0.4);
+    expect(progressAt('study-1')).toBeNull();
+  });
+
   test('completing then expiring never drops score below zero', () => {
     const r = createRound(makeConfig());
     r.spawnTask('jobApplication');

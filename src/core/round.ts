@@ -2,7 +2,7 @@ import { starsFor } from './scoring';
 import { createState, type RoundState } from './state';
 import { expireTasks, spawnRandomTask, spawnScheduledTasks, spawnTask } from './tasks';
 import type { GameSnapshot, RoundConfig, RoundSummary, TaskKind } from './types';
-import { work } from './work';
+import { stepProgress, work, workProgress } from './work';
 
 export class Round {
   private readonly state: RoundState;
@@ -62,7 +62,7 @@ export class Round {
         id: task.id,
         kind: task.kind,
         stepIndex: task.stepIndex,
-        stepProgress: 0, // T3 fills this in once work advances the steps
+        stepProgress: stepProgress(state, task),
         remainingMs: task.remainingMs,
         timeLimitMs: state.config.recipes[task.kind].timeLimitMs,
       })),
@@ -74,7 +74,7 @@ export class Round {
           item: agent?.item ?? state.counters[id] ?? null,
           agent: agent && { state: agent.status, progress: 0 },
           incident: state.incidents[id] ?? null,
-          workProgress: null,
+          workProgress: workProgress(state, type),
         };
       }),
       stats: { ...state.stats },
