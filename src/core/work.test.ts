@@ -53,6 +53,24 @@ describe('working at a station', () => {
   });
 });
 
+describe('Round.work guards', () => {
+  test('work is ignored after the round ends and on unknown stations', () => {
+    const r = createRound(makeConfig({ durationMs: 1000 }));
+    r.spawnTask('jobApplication');
+    r.work('nope', 100);
+    advance(r, 1000);
+    hold(r, 'linkedin-1', 1500);
+    expect(r.snapshot().stats.completed).toBe(0);
+  });
+
+  test('huge work deltas are clamped to maxDtMs', () => {
+    const r = createRound(makeConfig());
+    r.spawnTask('jobApplication');
+    r.work('linkedin-1', 5000);
+    expect(r.snapshot().tasks[0]?.stepProgress).toBeCloseTo(100 / 1500);
+  });
+});
+
 describe('carried items', () => {
   test('first step gives an item and advances the task', () => {
     const r = createRound(makeConfig());

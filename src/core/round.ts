@@ -18,9 +18,11 @@ export class Round {
 
   /** Holding E at a station for one frame. */
   work(stationId: string, dtMs: number): void {
-    const station = this.state.config.stations.find((s) => s.id === stationId);
-    if (station === undefined) return;
-    work(this.state, station.type, dtMs);
+    const { state } = this;
+    const station = state.config.stations.find((s) => s.id === stationId);
+    if (state.phase === 'ended' || station === undefined) return;
+    // Same clamp as update: one long frame must not finish a task at once.
+    work(state, station.type, Math.min(dtMs, state.config.balance.maxDtMs));
   }
 
   update(dtMs: number): void {
