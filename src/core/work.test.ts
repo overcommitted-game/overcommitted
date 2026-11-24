@@ -79,3 +79,26 @@ describe('carried items', () => {
     expect(r.snapshot()).toMatchObject({ held: null, tasks: [], stats: { completed: 1 } });
   });
 });
+
+describe('coffee', () => {
+  test('coffee speeds up work and wears off', () => {
+    const r = createRound(makeConfig());
+    r.spawnTask('jobApplication');
+    hold(r, 'coffee-1', 2000);
+    expect(r.snapshot().speedMultiplier).toBe(1.5);
+    hold(r, 'linkedin-1', 1000);
+    expect(r.snapshot().tasks).toHaveLength(0);
+    advance(r, 20000);
+    expect(r.snapshot().speedMultiplier).toBe(1);
+  });
+
+  test('coffee is made with an item in hand, which stays there', () => {
+    const r = createRound(makeConfig());
+    const id = r.spawnTask('clientBug');
+    hold(r, 'notebook-1', 3000);
+    hold(r, 'coffee-1', 1000);
+    expect(r.snapshot().stations.find((s) => s.id === 'coffee-1')?.workProgress).toBeCloseTo(0.5);
+    hold(r, 'coffee-1', 1000);
+    expect(r.snapshot()).toMatchObject({ speedMultiplier: 1.5, held: { type: 'prompt', taskId: id } });
+  });
+});
