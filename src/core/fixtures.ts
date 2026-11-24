@@ -89,3 +89,11 @@ export function makeConfig(overrides: Partial<Balance> = {}, rng: () => number =
 export function advance(round: Round, ms: number): void {
   for (let elapsed = 0; elapsed < ms; elapsed += 100) round.update(100);
 }
+
+/** Holds E at a station for `ms`: each 100 ms frame works first, then updates, like the game loop would. */
+export function hold(round: Round, stationId: string, ms: number): void {
+  for (let elapsed = 0; elapsed < ms; elapsed += 100) {
+    round.work(stationId, 100);
+    round.update(100);
+  }
+}
