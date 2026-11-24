@@ -2,6 +2,7 @@ import { starsFor } from './scoring';
 import { createState, type RoundState } from './state';
 import { expireTasks, spawnRandomTask, spawnScheduledTasks, spawnTask } from './tasks';
 import type { GameSnapshot, RoundConfig, RoundSummary, TaskKind } from './types';
+import { work } from './work';
 
 export class Round {
   private readonly state: RoundState;
@@ -13,6 +14,13 @@ export class Round {
 
   spawnTask(kind: TaskKind): number {
     return spawnTask(this.state, kind);
+  }
+
+  /** Holding E at a station for one frame. */
+  work(stationId: string, dtMs: number): void {
+    const station = this.state.config.stations.find((s) => s.id === stationId);
+    if (station === undefined) return;
+    work(this.state, station.type, dtMs);
   }
 
   update(dtMs: number): void {
