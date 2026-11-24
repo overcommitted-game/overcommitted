@@ -8,12 +8,17 @@ function workStep(state: RoundState, task: TaskState) {
   return step?.kind === 'work' ? step : null;
 }
 
-/** The task that holding E at a station of this type advances: the oldest one waiting there. */
+/**
+ * The task that holding E at a station of this type advances (spec §5.4):
+ * with an item in hand, only that item's task; with empty hands, the oldest one that needs nothing.
+ */
 function taskAt(state: RoundState, stationType: StationType): TaskState | null {
+  const { held } = state;
   return (
     state.tasks.find((task) => {
       const step = workStep(state, task);
-      return step !== null && step.station === stationType && step.needs === null;
+      if (step === null || step.station !== stationType) return false;
+      return held === null ? step.needs === null : task.id === held.taskId && step.needs === held.type;
     }) ?? null
   );
 }
@@ -37,6 +42,8 @@ export function work(state: RoundState, stationType: StationType, dtMs: number):
   // Progress lives in the task, not the station: walking away keeps it.
   task.stepProgressMs += dtMs;
   if (task.stepProgressMs < step.workMs) return;
+  if (step.needs !== null) state.held = null;
+  if (step.gives !== null) state.held = { type: step.gives, taskId: task.id };
   task.stepIndex++;
   task.stepProgressMs = 0;
   const recipe = state.config.recipes[task.kind];

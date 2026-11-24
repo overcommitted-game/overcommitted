@@ -52,3 +52,30 @@ describe('working at a station', () => {
     expect(r.snapshot().score).toBe(0);
   });
 });
+
+describe('carried items', () => {
+  test('first step gives an item and advances the task', () => {
+    const r = createRound(makeConfig());
+    const id = r.spawnTask('clientBug');
+    hold(r, 'notebook-1', 3000);
+    expect(r.snapshot().held).toEqual({ type: 'prompt', taskId: id });
+    expect(r.snapshot().tasks[0]?.stepIndex).toBe(1);
+  });
+
+  test('cannot start a new task with full hands', () => {
+    const r = createRound(makeConfig());
+    r.spawnTask('englishInterview');
+    r.spawnTask('techTest');
+    hold(r, 'study-1', 4000);
+    hold(r, 'study-1', 4000);
+    expect(r.snapshot().tasks.map((t) => t.stepIndex)).toEqual([1, 0]);
+  });
+
+  test('held item finishes its own task', () => {
+    const r = createRound(makeConfig());
+    r.spawnTask('englishInterview');
+    hold(r, 'study-1', 4000);
+    hold(r, 'interview-1', 4000);
+    expect(r.snapshot()).toMatchObject({ held: null, tasks: [], stats: { completed: 1 } });
+  });
+});
