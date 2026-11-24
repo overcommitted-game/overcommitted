@@ -31,16 +31,35 @@ export function stepProgress(state: RoundState, task: TaskState): number {
 
 /** 0..1 of the work already started at this station, or null when there is none to show. */
 export function workProgress(state: RoundState, stationType: StationType): number | null {
+  if (stationType === 'coffee') {
+    const { coffeeProgressMs } = state;
+    return coffeeProgressMs > 0 ? coffeeProgressMs / state.config.balance.coffee.workMs : null;
+  }
   const task = taskAt(state, stationType);
   return task !== null && task.stepProgressMs > 0 ? stepProgress(state, task) : null;
 }
 
+export function speedMultiplier(state: RoundState): number {
+  return state.buffMs > 0 ? state.config.balance.coffee.multiplier : 1;
+}
+
 export function work(state: RoundState, stationType: StationType, dtMs: number): void {
+  const dt = dtMs * speedMultiplier(state);
+  if (stationType === 'coffee') {
+    // Drunk on the spot (spec §5.11): hands can stay full, nothing is carried.
+    const { coffee } = state.config.balance;
+    state.coffeeProgressMs += dt;
+    if (state.coffeeProgressMs >= coffee.workMs) {
+      state.coffeeProgressMs = 0;
+      state.buffMs = coffee.durationMs;
+    }
+    return;
+  }
   const task = taskAt(state, stationType);
   const step = task && workStep(state, task);
   if (task === null || step === null) return;
   // Progress lives in the task, not the station: walking away keeps it.
-  task.stepProgressMs += dtMs;
+  task.stepProgressMs += dt;
   if (task.stepProgressMs < step.workMs) return;
   if (step.needs !== null) state.held = null;
   if (step.gives !== null) state.held = { type: step.gives, taskId: task.id };

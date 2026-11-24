@@ -2,7 +2,7 @@ import { starsFor } from './scoring';
 import { createState, type RoundState } from './state';
 import { expireTasks, spawnRandomTask, spawnScheduledTasks, spawnTask } from './tasks';
 import type { GameSnapshot, RoundConfig, RoundSummary, TaskKind } from './types';
-import { stepProgress, work, workProgress } from './work';
+import { speedMultiplier, stepProgress, work, workProgress } from './work';
 
 export class Round {
   private readonly state: RoundState;
@@ -30,6 +30,7 @@ export class Round {
     // A long frame (background tab, suspended laptop) must not skip seconds of the round.
     const dt = Math.min(dtMs, balance.maxDtMs);
     state.elapsedMs += dt;
+    state.buffMs = Math.max(0, state.buffMs - dt);
     spawnScheduledTasks(state, dt);
     expireTasks(state, dt);
     if (state.elapsedMs >= balance.durationMs) {
@@ -57,7 +58,7 @@ export class Round {
       durationMs: state.config.balance.durationMs,
       score: Math.round(state.score),
       held: state.held,
-      speedMultiplier: 1,
+      speedMultiplier: speedMultiplier(state),
       tasks: state.tasks.map((task) => ({
         id: task.id,
         kind: task.kind,

@@ -27,6 +27,8 @@ export interface RoundState {
   spawnTimerMs: number;
   tasks: TaskState[];
   held: Item | null;
+  buffMs: number; // coffee time left
+  coffeeProgressMs: number;
   agents: Record<string, AgentState>;
   counters: Record<string, Item | null>;
   incidents: Record<string, IncidentState | null>;
@@ -48,6 +50,8 @@ export function createState(config: RoundConfig): RoundState {
     spawnTimerMs: 0,
     tasks: [],
     held: null,
+    buffMs: 0,
+    coffeeProgressMs: 0,
     agents: Object.fromEntries(
       idsOf('agent').map((id): [string, AgentState] => [id, { status: 'idle', item: null, timerMs: 0 }]),
     ),
