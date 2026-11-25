@@ -58,6 +58,17 @@ describe('ai agents', () => {
     expect(station(r, 'agent-1')).toMatchObject({ item: null, agent: { state: 'idle' } });
   });
 
+  test('ready agent keeps its result while your hands are full', () => {
+    const { r, id } = promptInHand();
+    r.interact('agent-1');
+    advance(r, 8000);
+    const other = r.spawnTask('clientBug');
+    hold(r, 'notebook-1', 3000);
+    r.interact('agent-1');
+    expect(r.snapshot().held).toEqual({ type: 'prompt', taskId: other });
+    expect(station(r, 'agent-1')).toMatchObject({ item: { type: 'pr', taskId: id }, agent: { state: 'ready' } });
+  });
+
   test('full bug flow completes the task', () => {
     const { r } = promptInHand();
     r.interact('agent-1');
