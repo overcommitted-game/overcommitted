@@ -1,3 +1,4 @@
+import { interact } from './handoff';
 import { starsFor } from './scoring';
 import { createState, type RoundState } from './state';
 import { expireTasks, spawnRandomTask, spawnScheduledTasks, spawnTask } from './tasks';
@@ -23,6 +24,14 @@ export class Round {
     if (state.phase === 'ended' || station === undefined) return;
     // Same clamp as update: one long frame must not finish a task at once.
     work(state, station.type, Math.min(dtMs, state.config.balance.maxDtMs));
+  }
+
+  /** Tapping E at a station once. */
+  interact(stationId: string): void {
+    const { state } = this;
+    const station = state.config.stations.find((s) => s.id === stationId);
+    if (state.phase === 'ended' || station === undefined) return;
+    interact(state, station);
   }
 
   update(dtMs: number): void {
