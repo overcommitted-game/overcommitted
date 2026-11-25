@@ -1,3 +1,4 @@
+import { startIncident } from './incidents';
 import type { AgentState, RoundState } from './state';
 import type { Station } from './types';
 
@@ -48,16 +49,34 @@ export function interact(state: RoundState, station: Station): void {
   }
 }
 
+/** The result was not collected in time (spec §5.11): it is lost and its task starts over. */
+function hallucinate(state: RoundState, stationId: string, agent: AgentState, taskId: number): void {
+  const task = taskById(state, taskId);
+  if (task !== null) {
+    task.stepIndex = 0;
+    task.stepProgressMs = 0;
+  }
+  agent.status = 'idle';
+  agent.item = null;
+  agent.timerMs = 0;
+  startIncident(state, 'hallucination', stationId);
+}
+
 /** Agents process on their own: the coffee buff speeds up the player, not them. */
 export function updateAgents(state: RoundState, dtMs: number): void {
-  for (const agent of Object.values(state.agents)) {
-    if (agent.status !== 'working' || agent.item === null) continue;
+  for (const [stationId, agent] of Object.entries(state.agents)) {
+    if (agent.status === 'idle' || agent.item === null) continue;
     agent.timerMs -= dtMs;
     if (agent.timerMs > 0) continue;
-    const step = agentStep(state, agent.item.taskId);
+    const { taskId } = agent.item;
+    if (agent.status === 'ready') {
+      hallucinate(state, stationId, agent, taskId);
+      continue;
+    }
+    const step = agentStep(state, taskId);
     if (step === null) continue;
     agent.status = 'ready';
-    agent.item = { type: step.gives, taskId: agent.item.taskId };
+    agent.item = { type: step.gives, taskId };
     agent.timerMs = state.config.balance.agentReadyWindowMs;
   }
 }
