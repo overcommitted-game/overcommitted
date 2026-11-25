@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { hold, makeConfig } from './fixtures';
+import { advance, hold, makeConfig } from './fixtures';
 import { createRound, type Round } from './round';
 import type { Balance } from './types';
 
@@ -11,6 +11,62 @@ function promptInHand(overrides: Partial<Balance> = {}) {
   return { r, id };
 }
 const station = (r: Round, id: string) => r.snapshot().stations.find((s) => s.id === id)!;
+
+describe('ai agents', () => {
+  test('drops a matching item into an idle agent', () => {
+    const { r, id } = promptInHand();
+    r.interact('agent-1');
+    expect(r.snapshot().held).toBeNull();
+    expect(station(r, 'agent-1')).toMatchObject({
+      item: { type: 'prompt', taskId: id },
+      agent: { state: 'working', progress: 0 },
+    });
+  });
+
+  test('agent rejects items that are not its next step', () => {
+    const r = createRound(makeConfig());
+    r.spawnTask('englishInterview');
+    hold(r, 'study-1', 4000);
+    r.interact('agent-1');
+    expect(r.snapshot().held?.type).toBe('englishNotes');
+  });
+
+  test('busy agent refuses a second item', () => {
+    const { r } = promptInHand();
+    r.interact('agent-1');
+    r.spawnTask('clientBug');
+    hold(r, 'notebook-1', 3000);
+    r.interact('agent-1');
+    expect(r.snapshot().held?.type).toBe('prompt');
+  });
+
+  test('agent shows its progress while working', () => {
+    const { r } = promptInHand();
+    r.interact('agent-1');
+    advance(r, 2000);
+    expect(station(r, 'agent-1').agent).toEqual({ state: 'working', progress: 0.25 });
+  });
+
+  test('agent result is collected with empty hands', () => {
+    const { r, id } = promptInHand();
+    r.interact('agent-1');
+    advance(r, 8000);
+    expect(station(r, 'agent-1')).toMatchObject({ item: { type: 'pr', taskId: id }, agent: { state: 'ready' } });
+    r.interact('agent-1');
+    expect(r.snapshot().held).toEqual({ type: 'pr', taskId: id });
+    expect(r.snapshot().tasks[0]?.stepIndex).toBe(2);
+    expect(station(r, 'agent-1')).toMatchObject({ item: null, agent: { state: 'idle' } });
+  });
+
+  test('full bug flow completes the task', () => {
+    const { r } = promptInHand();
+    r.interact('agent-1');
+    advance(r, 8000);
+    r.interact('agent-1');
+    hold(r, 'notebook-1', 2000);
+    expect(r.snapshot().stats.completed).toBe(1);
+  });
+});
 
 describe('counters', () => {
   test('counter stores one item and gives it back', () => {
