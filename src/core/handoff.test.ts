@@ -78,6 +78,13 @@ describe('ai agents', () => {
     expect(r.snapshot().stats.completed).toBe(1);
   });
 
+  test('ready agent waits the whole window before hallucinating', () => {
+    const { r } = promptInHand();
+    r.interact('agent-1');
+    advance(r, 8000 + 9900);
+    expect(station(r, 'agent-1')).toMatchObject({ agent: { state: 'ready' }, incident: null });
+  });
+
   test('unattended ready agent hallucinates and resets its task', () => {
     const { r } = promptInHand();
     r.interact('agent-1');
