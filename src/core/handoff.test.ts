@@ -89,6 +89,36 @@ describe('ai agents', () => {
   });
 });
 
+describe('a task that expires takes its item with it', () => {
+  test('from the hand', () => {
+    const { r } = promptInHand();
+    advance(r, 70000);
+    expect(r.snapshot().held).toBeNull();
+  });
+
+  test('from a counter', () => {
+    const { r } = promptInHand();
+    r.interact('counter-1');
+    advance(r, 70000);
+    expect(station(r, 'counter-1').item).toBeNull();
+  });
+
+  test('from an agent, which then never hallucinates', () => {
+    const { r } = promptInHand({ agentReadyWindowMs: 1e9 }); // so it does not hallucinate before expiring
+    r.interact('agent-1');
+    advance(r, 70000);
+    expect(station(r, 'agent-1')).toMatchObject({ item: null, agent: { state: 'idle' }, incident: null });
+  });
+
+  test('items of other tasks stay', () => {
+    const { r } = promptInHand();
+    r.spawnTask('jobApplication');
+    advance(r, 30000);
+    expect(r.snapshot().stats.expired).toBe(1);
+    expect(r.snapshot().held?.type).toBe('prompt');
+  });
+});
+
 describe('counters', () => {
   test('counter stores one item and gives it back', () => {
     const { r, id } = promptInHand();

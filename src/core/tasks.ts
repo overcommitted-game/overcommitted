@@ -1,5 +1,5 @@
-import { addScore, type RoundState } from './state';
-import { TASK_KINDS, type TaskKind } from './types';
+import { addScore, idleAgent, type RoundState } from './state';
+import { TASK_KINDS, type Item, type TaskKind } from './types';
 
 export function spawnTask(state: RoundState, kind: TaskKind): number {
   const id = state.nextTaskId++;
@@ -35,9 +35,18 @@ export function spawnScheduledTasks(state: RoundState, dtMs: number): void {
   }
 }
 
-/** The only place a task leaves the round. */
+/** The only place a task leaves the round: its item leaves with it, from wherever it is. */
 export function removeTask(state: RoundState, taskId: number): void {
   state.tasks = state.tasks.filter((task) => task.id !== taskId);
+  const ofTask = (item: Item | null) => item?.taskId === taskId;
+  if (ofTask(state.held)) state.held = null;
+  for (const [id, item] of Object.entries(state.counters)) {
+    if (ofTask(item)) state.counters[id] = null;
+  }
+  // An emptied agent goes idle, so it never hallucinates over a task that is gone.
+  for (const agent of Object.values(state.agents)) {
+    if (ofTask(agent.item)) Object.assign(agent, idleAgent());
+  }
 }
 
 export function expireTasks(state: RoundState, dtMs: number): void {
