@@ -66,6 +66,27 @@ describe('ai agents', () => {
     hold(r, 'notebook-1', 2000);
     expect(r.snapshot().stats.completed).toBe(1);
   });
+
+  test('unattended ready agent hallucinates and resets its task', () => {
+    const { r } = promptInHand();
+    r.interact('agent-1');
+    advance(r, 8000 + 10000);
+    expect(station(r, 'agent-1')).toMatchObject({
+      item: null,
+      agent: { state: 'idle' },
+      incident: { kind: 'hallucination' },
+    });
+    expect(r.snapshot().tasks[0]).toMatchObject({ stepIndex: 0, stepProgress: 0 });
+  });
+
+  test('a hallucinated agent ignores interact until its incident is resolved', () => {
+    const { r } = promptInHand();
+    r.interact('agent-1');
+    advance(r, 8000 + 10000);
+    hold(r, 'notebook-1', 3000);
+    r.interact('agent-1');
+    expect(r.snapshot().held?.type).toBe('prompt');
+  });
 });
 
 describe('counters', () => {

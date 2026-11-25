@@ -26,11 +26,12 @@ export class Round {
     work(state, station.type, Math.min(dtMs, state.config.balance.maxDtMs));
   }
 
-  /** Tapping E at a station once. */
+  /** Tapping E at a station once. A station with an incident is blocked until it is resolved. */
   interact(stationId: string): void {
     const { state } = this;
     const station = state.config.stations.find((s) => s.id === stationId);
-    if (state.phase === 'ended' || station === undefined) return;
+    const incident = state.incidents[stationId] ?? null;
+    if (state.phase === 'ended' || station === undefined || incident !== null) return;
     interact(state, station);
   }
 
