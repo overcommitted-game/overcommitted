@@ -12,6 +12,13 @@ function promptInHand(overrides: Partial<Balance> = {}) {
 }
 const station = (r: Round, id: string) => r.snapshot().stations.find((s) => s.id === id)!;
 
+test('interact does nothing once the round ended', () => {
+  const { r } = promptInHand({ durationMs: 3000 });
+  expect(r.snapshot().phase).toBe('ended');
+  r.interact('counter-1');
+  expect(r.snapshot().held).not.toBeNull();
+});
+
 describe('ai agents', () => {
   test('drops a matching item into an idle agent', () => {
     const { r, id } = promptInHand();
@@ -156,12 +163,5 @@ describe('counters', () => {
     r.interact('counter-1');
     expect(r.snapshot().held).toEqual({ type: 'prompt', taskId: second });
     expect(station(r, 'counter-1').item).toEqual({ type: 'prompt', taskId: id });
-  });
-
-  test('interact does nothing once the round ended', () => {
-    const { r } = promptInHand({ durationMs: 3000 });
-    expect(r.snapshot().phase).toBe('ended');
-    r.interact('counter-1');
-    expect(r.snapshot().held).not.toBeNull();
   });
 });
