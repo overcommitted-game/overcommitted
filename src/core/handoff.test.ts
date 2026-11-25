@@ -142,12 +142,13 @@ describe('counters', () => {
   });
 
   test('full counter refuses a second item', () => {
-    const { r } = promptInHand();
+    const { r, id } = promptInHand();
     r.interact('counter-1');
-    r.spawnTask('clientBug');
+    const second = r.spawnTask('clientBug');
     hold(r, 'notebook-1', 3000);
     r.interact('counter-1');
-    expect(r.snapshot().held).not.toBeNull();
+    expect(r.snapshot().held).toEqual({ type: 'prompt', taskId: second });
+    expect(station(r, 'counter-1').item).toEqual({ type: 'prompt', taskId: id });
   });
 
   test('interact does nothing once the round ended', () => {
