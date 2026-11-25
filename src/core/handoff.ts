@@ -1,5 +1,5 @@
 import { startIncident } from './incidents';
-import type { AgentState, RoundState } from './state';
+import { idleAgent, type AgentState, type RoundState } from './state';
 import type { Station } from './types';
 
 function taskById(state: RoundState, taskId: number) {
@@ -27,9 +27,7 @@ function interactWithAgent(state: RoundState, agent: AgentState): void {
     if (task === null) return;
     state.held = agent.item;
     task.stepIndex++;
-    agent.status = 'idle';
-    agent.item = null;
-    agent.timerMs = 0;
+    Object.assign(agent, idleAgent());
   }
 }
 
@@ -56,9 +54,7 @@ function hallucinate(state: RoundState, stationId: string, agent: AgentState, ta
     task.stepIndex = 0;
     task.stepProgressMs = 0;
   }
-  agent.status = 'idle';
-  agent.item = null;
-  agent.timerMs = 0;
+  Object.assign(agent, idleAgent());
   startIncident(state, 'hallucination', stationId);
 }
 

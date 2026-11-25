@@ -39,6 +39,10 @@ export function addScore(state: RoundState, delta: number): void {
   state.score = Math.max(0, state.score + delta);
 }
 
+export function idleAgent(): AgentState {
+  return { status: 'idle', item: null, timerMs: 0 };
+}
+
 export function createState(config: RoundConfig): RoundState {
   const idsOf = (...types: string[]) => config.stations.filter((s) => types.includes(s.type)).map((s) => s.id);
   return {
@@ -53,7 +57,7 @@ export function createState(config: RoundConfig): RoundState {
     buffMs: 0,
     coffeeProgressMs: 0,
     agents: Object.fromEntries(
-      idsOf('agent').map((id): [string, AgentState] => [id, { status: 'idle', item: null, timerMs: 0 }]),
+      idsOf('agent').map((id): [string, AgentState] => [id, idleAgent()]),
     ),
     counters: Object.fromEntries(idsOf('counter').map((id) => [id, null])),
     // Incidents can hit the notebook (fire, npm) and the agents (hallucination).
