@@ -1,4 +1,4 @@
-import { interact } from './handoff';
+import { agentProgress, interact, updateAgents } from './handoff';
 import { starsFor } from './scoring';
 import { createState, type RoundState } from './state';
 import { expireTasks, spawnRandomTask, spawnScheduledTasks, spawnTask } from './tasks';
@@ -44,6 +44,7 @@ export class Round {
     state.buffMs = Math.max(0, state.buffMs - dt);
     spawnScheduledTasks(state, dt);
     expireTasks(state, dt);
+    updateAgents(state, dt);
     if (state.elapsedMs >= balance.durationMs) {
       state.elapsedMs = balance.durationMs;
       state.phase = 'ended';
@@ -84,7 +85,7 @@ export class Round {
           id,
           type,
           item: agent?.item ?? state.counters[id] ?? null,
-          agent: agent && { state: agent.status, progress: 0 },
+          agent: agent && { state: agent.status, progress: agentProgress(state, agent) },
           incident: state.incidents[id] ?? null,
           workProgress: workProgress(state, type),
         };
