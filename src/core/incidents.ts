@@ -1,4 +1,4 @@
-import type { RoundState } from './state';
+import { addScore, type RoundState } from './state';
 import type { Arrow, IncidentKind } from './types';
 
 const ARROWS = ['up', 'right', 'down', 'left'] as const;
@@ -17,4 +17,10 @@ export function startIncident(state: RoundState, kind: IncidentKind, stationId: 
   const sequence = Array.from({ length: sequenceLength }, () => randomArrow(state.config.rng));
   state.incidents[stationId] = { kind, sequence, typed: 0 };
   return true;
+}
+
+export function updateIncidents(state: RoundState, dtMs: number): void {
+  const { drainPerSec } = state.config.balance.incidents;
+  const active = Object.values(state.incidents).filter((incident) => incident !== null).length;
+  addScore(state, (-active * drainPerSec * dtMs) / 1000);
 }
