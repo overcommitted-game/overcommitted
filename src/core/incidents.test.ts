@@ -60,3 +60,36 @@ describe('score drain', () => {
     expect(round.snapshot().score).toBe(before - 6);
   });
 });
+
+describe('typing the arrow sequence', () => {
+  test('the correct sequence resolves the incident and unblocks the station', () => {
+    const round = createRound(makeConfig());
+    round.spawnTask('clientBug');
+    round.spawnIncident('fire', 'notebook-1');
+    const { sequence } = incidentAt(round, 'notebook-1')!;
+    const results = sequence.map((arrow) => round.inputArrow('notebook-1', arrow));
+    expect(results).toEqual(['progress', 'progress', 'progress', 'resolved']);
+    expect(incidentAt(round, 'notebook-1')).toBeNull();
+    expect(round.snapshot().stats.incidentsResolved).toBe(1);
+    hold(round, 'notebook-1', 3000);
+    expect(round.snapshot().held?.type).toBe('prompt');
+  });
+
+  test('a wrong arrow restarts the sequence and the incident stays', () => {
+    const round = createRound(makeConfig());
+    round.spawnIncident('fire', 'notebook-1');
+    // The fixture rng always draws 'left'.
+    round.inputArrow('notebook-1', 'left');
+    expect(round.inputArrow('notebook-1', 'up')).toBe('reset');
+    expect(incidentAt(round, 'notebook-1')!.typed).toBe(0);
+  });
+
+  test('arrows are ignored without an incident or after the round ends', () => {
+    const round = createRound(makeConfig({ durationMs: 100 }));
+    expect(round.inputArrow('notebook-1', 'up')).toBe('ignored');
+    expect(round.inputArrow('coffee-1', 'up')).toBe('ignored');
+    round.spawnIncident('fire', 'notebook-1');
+    round.update(100);
+    expect(round.inputArrow('notebook-1', 'left')).toBe('ignored');
+  });
+});
