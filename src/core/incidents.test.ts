@@ -33,6 +33,13 @@ describe('starting an incident', () => {
     expect(round.spawnIncident('fire', 'coffee-1')).toBe(false);
     expect(incidentAt(round, 'coffee-1')).toBeNull();
   });
+
+  test('is refused after the round ends', () => {
+    const round = createRound(makeConfig({ durationMs: 100 }));
+    round.update(100);
+    expect(round.spawnIncident('fire', 'notebook-1')).toBe(false);
+    expect(incidentAt(round, 'notebook-1')).toBeNull();
+  });
 });
 
 describe('a station with an incident', () => {
