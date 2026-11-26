@@ -1,8 +1,9 @@
 import { agentProgress, interact, updateAgents } from './handoff';
+import { startIncident } from './incidents';
 import { starsFor } from './scoring';
 import { createState, type RoundState } from './state';
 import { expireTasks, spawnRandomTask, spawnScheduledTasks, spawnTask } from './tasks';
-import type { GameSnapshot, RoundConfig, RoundSummary, TaskKind } from './types';
+import type { GameSnapshot, IncidentKind, RoundConfig, RoundSummary, TaskKind } from './types';
 import { speedMultiplier, stepProgress, work, workProgress } from './work';
 
 export class Round {
@@ -15,6 +16,10 @@ export class Round {
 
   spawnTask(kind: TaskKind): number {
     return spawnTask(this.state, kind);
+  }
+
+  spawnIncident(kind: IncidentKind, stationId: string): boolean {
+    return startIncident(this.state, kind, stationId);
   }
 
   /** Holding E at a station for one frame. */
