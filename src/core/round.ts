@@ -112,8 +112,8 @@ export class Round {
           type,
           item: agent?.item ?? state.counters[id] ?? null,
           agent: agent && { state: agent.status, progress: agentProgress(state, agent) },
-          // A copy: `typed` keeps changing, and an old snapshot must not change with it.
-          incident: incident && { ...incident },
+          // A full copy: neither the round nor whoever reads the snapshot can change the other's.
+          incident: incident && { ...incident, sequence: [...incident.sequence] },
           workProgress: workProgress(state, type),
         };
       }),
