@@ -142,6 +142,13 @@ describe('typing the arrow sequence', () => {
     expect(before.typed).toBe(0);
   });
 
+  test('changing a snapshot sequence does not change the real one', () => {
+    const round = createRound(makeConfig());
+    round.spawnIncident('fire', 'notebook-1');
+    incidentAt(round, 'notebook-1')!.sequence.length = 1;
+    expect(round.inputArrow('notebook-1', 'left')).toBe('progress');
+  });
+
   test('arrows are ignored without an incident or after the round ends', () => {
     const round = createRound(makeConfig({ durationMs: 100 }));
     expect(round.inputArrow('notebook-1', 'up')).toBe('ignored');
