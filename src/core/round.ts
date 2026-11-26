@@ -28,6 +28,7 @@ export class Round {
   }
 
   spawnIncident(kind: IncidentKind, stationId: string): boolean {
+    if (this.state.phase === 'ended') return false;
     return startIncident(this.state, kind, stationId);
   }
 
