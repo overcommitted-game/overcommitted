@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { makeConfig } from './fixtures';
+import { hold, makeConfig } from './fixtures';
 import { createRound, type Round } from './round';
 
 function incidentAt(round: Round, stationId: string) {
@@ -32,5 +32,16 @@ describe('starting an incident', () => {
     const round = createRound(makeConfig());
     expect(round.spawnIncident('fire', 'coffee-1')).toBe(false);
     expect(incidentAt(round, 'coffee-1')).toBeNull();
+  });
+});
+
+describe('a station with an incident', () => {
+  test('ignores work until it is resolved', () => {
+    const round = createRound(makeConfig());
+    round.spawnTask('clientBug');
+    round.spawnIncident('fire', 'notebook-1');
+    hold(round, 'notebook-1', 3000);
+    expect(round.snapshot().held).toBeNull();
+    expect(round.snapshot().tasks[0]!.stepProgress).toBe(0);
   });
 });
