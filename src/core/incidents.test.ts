@@ -190,6 +190,17 @@ describe('random incidents', () => {
     expect(active(round)).toEqual([['notebook-1', 'fire']]);
   });
 
+  test('can hit every notebook', () => {
+    const config = makeConfig({ incidents: { ...eager, graceMs: 0 } }, () => 0);
+    const stations = [...config.stations, { id: 'notebook-2', type: 'notebook' as const }];
+    const round = createRound({ ...config, stations });
+    advance(round, 100);
+    expect(active(round)).toEqual([
+      ['notebook-1', 'fire'],
+      ['notebook-2', 'fire'],
+    ]);
+  });
+
   test('the chance per frame is dt over the mean interval', () => {
     // 100 ms frames: fire has a 0.1 chance and npm a 0.4 chance, and every roll is 0.2.
     const incidents = {
