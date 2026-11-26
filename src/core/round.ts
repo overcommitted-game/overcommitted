@@ -3,7 +3,7 @@ import { startIncident } from './incidents';
 import { starsFor } from './scoring';
 import { createState, type RoundState } from './state';
 import { expireTasks, spawnRandomTask, spawnScheduledTasks, spawnTask } from './tasks';
-import type { GameSnapshot, IncidentKind, RoundConfig, RoundSummary, TaskKind } from './types';
+import type { GameSnapshot, IncidentKind, RoundConfig, RoundSummary, Station, TaskKind } from './types';
 import { speedMultiplier, stepProgress, work, workProgress } from './work';
 
 export class Round {
@@ -24,20 +24,24 @@ export class Round {
 
   /** Holding E at a station for one frame. */
   work(stationId: string, dtMs: number): void {
-    const { state } = this;
-    const station = state.config.stations.find((s) => s.id === stationId);
-    if (state.phase === 'ended' || station === undefined) return;
+    const station = this.usableStation(stationId);
+    if (station === null) return;
     // Same clamp as update: one long frame must not finish a task at once.
-    work(state, station.type, Math.min(dtMs, state.config.balance.maxDtMs));
+    work(this.state, station.type, Math.min(dtMs, this.state.config.balance.maxDtMs));
   }
 
-  /** Tapping E at a station once. A station with an incident is blocked until it is resolved. */
+  /** Tapping E at a station once. */
   interact(stationId: string): void {
+    const station = this.usableStation(stationId);
+    if (station !== null) interact(this.state, station);
+  }
+
+  /** The station the player can use right now. One with an incident is blocked until it is resolved. */
+  private usableStation(stationId: string): Station | null {
     const { state } = this;
-    const station = state.config.stations.find((s) => s.id === stationId);
     const incident = state.incidents[stationId] ?? null;
-    if (state.phase === 'ended' || station === undefined || incident !== null) return;
-    interact(state, station);
+    if (state.phase === 'ended' || incident !== null) return null;
+    return state.config.stations.find((s) => s.id === stationId) ?? null;
   }
 
   update(dtMs: number): void {
