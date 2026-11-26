@@ -61,6 +61,35 @@ describe('score drain', () => {
   });
 });
 
+describe('score drain limits', () => {
+  /** A round with 15 points and one active incident. */
+  function burningRound() {
+    const round = createRound(makeConfig());
+    round.spawnTask('jobApplication');
+    hold(round, 'linkedin-1', 1500);
+    round.spawnIncident('fire', 'notebook-1');
+    return round;
+  }
+
+  test('never takes the score below zero', () => {
+    const round = burningRound();
+    advance(round, 10000);
+    expect(round.snapshot().score).toBe(0);
+  });
+
+  test('is proportional to the frame time', () => {
+    const round = burningRound();
+    for (let i = 0; i < 100; i++) round.update(10);
+    expect(round.snapshot().score).toBe(13);
+  });
+
+  test('does not charge a long frame all at once', () => {
+    const round = burningRound();
+    round.update(5000);
+    expect(round.snapshot().score).toBe(15);
+  });
+});
+
 describe('typing the arrow sequence', () => {
   test('the correct sequence resolves the incident and unblocks the station', () => {
     const round = createRound(makeConfig());
