@@ -2,6 +2,8 @@ import { addScore, type RoundState } from './state';
 import type { Arrow, ArrowResult, IncidentKind } from './types';
 
 const ARROWS = ['up', 'right', 'down', 'left'] as const;
+// In roll order. Hallucinations are not random: the player causes them.
+const RANDOM_KINDS = ['fire', 'npmVuln'] as const;
 
 function randomArrow(rng: () => number): Arrow {
   const arrow = ARROWS[Math.floor(rng() * ARROWS.length)];
@@ -33,8 +35,22 @@ export function inputArrow(state: RoundState, stationId: string, arrow: Arrow): 
   return 'resolved';
 }
 
+/** Each frame, each kind has a dt / meanInterval chance of hitting a free notebook. */
+function spawnRandomIncidents(state: RoundState, dtMs: number): void {
+  const { incidents } = state.config.balance;
+  if (state.elapsedMs <= incidents.graceMs) return;
+  for (const { id, type } of state.config.stations) {
+    if (type !== 'notebook') continue;
+    for (const kind of RANDOM_KINDS) {
+      // startIncident refuses an occupied station.
+      if (state.config.rng() < dtMs / incidents[kind].meanIntervalMs) startIncident(state, kind, id);
+    }
+  }
+}
+
 export function updateIncidents(state: RoundState, dtMs: number): void {
   const { drainPerSec } = state.config.balance.incidents;
   const active = Object.values(state.incidents).filter((incident) => incident !== null).length;
   addScore(state, (-active * drainPerSec * dtMs) / 1000);
+  spawnRandomIncidents(state, dtMs);
 }

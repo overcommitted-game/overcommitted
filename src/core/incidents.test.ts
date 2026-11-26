@@ -101,3 +101,39 @@ describe('typing the arrow sequence', () => {
     expect(round.inputArrow('notebook-1', 'left')).toBe('ignored');
   });
 });
+
+describe('random incidents', () => {
+  const eager = {
+    graceMs: 1000,
+    drainPerSec: 2,
+    fire: { meanIntervalMs: 1, sequenceLength: 4 },
+    npmVuln: { meanIntervalMs: 1, sequenceLength: 4 },
+    hallucination: { sequenceLength: 3 },
+  };
+  const active = (round: Round) =>
+    round
+      .snapshot()
+      .stations.flatMap((s) => (s.incident === null ? [] : [[s.id, s.incident.kind]]));
+
+  test('hit only notebooks, after the grace period, one per station', () => {
+    const round = createRound(makeConfig({ incidents: eager }, () => 0));
+    advance(round, 1000);
+    expect(active(round)).toEqual([]);
+    advance(round, 500);
+    // Fire rolls first, so it takes the notebook before npm can.
+    expect(active(round)).toEqual([['notebook-1', 'fire']]);
+  });
+
+  test('the chance per frame is dt over the mean interval', () => {
+    // 100 ms frames: fire has a 0.1 chance and npm a 0.4 chance, and every roll is 0.2.
+    const incidents = {
+      ...eager,
+      graceMs: 0,
+      fire: { meanIntervalMs: 1000, sequenceLength: 4 },
+      npmVuln: { meanIntervalMs: 250, sequenceLength: 4 },
+    };
+    const round = createRound(makeConfig({ incidents }, () => 0.2));
+    advance(round, 100);
+    expect(active(round)).toEqual([['notebook-1', 'npmVuln']]);
+  });
+});
