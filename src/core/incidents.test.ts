@@ -102,6 +102,22 @@ describe('typing the arrow sequence', () => {
   });
 });
 
+describe('hallucination', () => {
+  test('resolving it frees the agent for new work', () => {
+    const round = createRound(makeConfig());
+    round.spawnTask('clientBug');
+    hold(round, 'notebook-1', 3000);
+    round.interact('agent-1');
+    advance(round, 18000); // 8 s processing + 10 s ready window, nobody collects
+    const { sequence } = incidentAt(round, 'agent-1')!;
+    expect(sequence).toHaveLength(3);
+    for (const arrow of sequence) round.inputArrow('agent-1', arrow);
+    hold(round, 'notebook-1', 3000);
+    round.interact('agent-1');
+    expect(round.snapshot().stations.find((s) => s.id === 'agent-1')!.agent?.state).toBe('working');
+  });
+});
+
 describe('random incidents', () => {
   const eager = {
     graceMs: 1000,
