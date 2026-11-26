@@ -90,6 +90,27 @@ describe('score drain limits', () => {
   });
 });
 
+describe('incident balance', () => {
+  test('the drain rate and the sequence lengths come from the balance', () => {
+    const { incidents } = makeConfig().balance;
+    const tuned = {
+      ...incidents,
+      drainPerSec: 5,
+      fire: { ...incidents.fire, sequenceLength: 6 },
+      hallucination: { sequenceLength: 2 },
+    };
+    const round = createRound(makeConfig({ incidents: tuned }));
+    round.spawnTask('jobApplication');
+    hold(round, 'linkedin-1', 1500);
+    round.spawnIncident('fire', 'notebook-1');
+    expect(incidentAt(round, 'notebook-1')!.sequence).toHaveLength(6);
+    advance(round, 1000);
+    expect(round.snapshot().score).toBe(10);
+    round.spawnIncident('hallucination', 'agent-1');
+    expect(incidentAt(round, 'agent-1')!.sequence).toHaveLength(2);
+  });
+});
+
 describe('typing the arrow sequence', () => {
   test('the correct sequence resolves the incident and unblocks the station', () => {
     const round = createRound(makeConfig());
