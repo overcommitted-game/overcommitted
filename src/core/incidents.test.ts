@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { hold, makeConfig } from './fixtures';
+import { advance, hold, makeConfig } from './fixtures';
 import { createRound, type Round } from './round';
 
 function incidentAt(round: Round, stationId: string) {
@@ -43,5 +43,20 @@ describe('a station with an incident', () => {
     hold(round, 'notebook-1', 3000);
     expect(round.snapshot().held).toBeNull();
     expect(round.snapshot().tasks[0]!.stepProgress).toBe(0);
+  });
+});
+
+describe('score drain', () => {
+  test('each active incident drains score every second', () => {
+    const round = createRound(makeConfig());
+    round.spawnTask('jobApplication');
+    hold(round, 'linkedin-1', 1500);
+    const before = round.snapshot().score;
+    round.spawnIncident('fire', 'notebook-1');
+    advance(round, 1000);
+    expect(round.snapshot().score).toBe(before - 2);
+    round.spawnIncident('hallucination', 'agent-1');
+    advance(round, 1000);
+    expect(round.snapshot().score).toBe(before - 6);
   });
 });
