@@ -1,5 +1,5 @@
 import { addScore, type RoundState } from './state';
-import type { Arrow, IncidentKind } from './types';
+import type { Arrow, ArrowResult, IncidentKind } from './types';
 
 const ARROWS = ['up', 'right', 'down', 'left'] as const;
 
@@ -17,6 +17,20 @@ export function startIncident(state: RoundState, kind: IncidentKind, stationId: 
   const sequence = Array.from({ length: sequenceLength }, () => randomArrow(state.config.rng));
   state.incidents[stationId] = { kind, sequence, typed: 0 };
   return true;
+}
+
+export function inputArrow(state: RoundState, stationId: string, arrow: Arrow): ArrowResult {
+  const incident = state.incidents[stationId] ?? null;
+  if (incident === null) return 'ignored';
+  if (arrow !== incident.sequence[incident.typed]) {
+    incident.typed = 0;
+    return 'reset';
+  }
+  incident.typed++;
+  if (incident.typed < incident.sequence.length) return 'progress';
+  state.incidents[stationId] = null;
+  state.stats.incidentsResolved++;
+  return 'resolved';
 }
 
 export function updateIncidents(state: RoundState, dtMs: number): void {

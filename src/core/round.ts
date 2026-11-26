@@ -1,9 +1,18 @@
 import { agentProgress, interact, updateAgents } from './handoff';
-import { startIncident, updateIncidents } from './incidents';
+import { inputArrow, startIncident, updateIncidents } from './incidents';
 import { starsFor } from './scoring';
 import { createState, type RoundState } from './state';
 import { expireTasks, spawnRandomTask, spawnScheduledTasks, spawnTask } from './tasks';
-import type { GameSnapshot, IncidentKind, RoundConfig, RoundSummary, Station, TaskKind } from './types';
+import type {
+  Arrow,
+  ArrowResult,
+  GameSnapshot,
+  IncidentKind,
+  RoundConfig,
+  RoundSummary,
+  Station,
+  TaskKind,
+} from './types';
 import { speedMultiplier, stepProgress, work, workProgress } from './work';
 
 export class Round {
@@ -20,6 +29,11 @@ export class Round {
 
   spawnIncident(kind: IncidentKind, stationId: string): boolean {
     return startIncident(this.state, kind, stationId);
+  }
+
+  inputArrow(stationId: string, arrow: Arrow): ArrowResult {
+    if (this.state.phase === 'ended') return 'ignored';
+    return inputArrow(this.state, stationId, arrow);
   }
 
   /** Holding E at a station for one frame. */
