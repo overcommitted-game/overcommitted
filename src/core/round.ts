@@ -106,12 +106,14 @@ export class Round {
       })),
       stations: state.config.stations.map(({ id, type }) => {
         const agent = state.agents[id] ?? null;
+        const incident = state.incidents[id] ?? null;
         return {
           id,
           type,
           item: agent?.item ?? state.counters[id] ?? null,
           agent: agent && { state: agent.status, progress: agentProgress(state, agent) },
-          incident: state.incidents[id] ?? null,
+          // A copy: `typed` keeps changing, and an old snapshot must not change with it.
+          incident: incident && { ...incident },
           workProgress: workProgress(state, type),
         };
       }),
